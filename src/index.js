@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import debounce from "tiny-debounce";
+import stable from "semver-stable";
 
 import {
   AutoComplete,
@@ -43,7 +44,8 @@ class App extends React.Component {
   state = {
     suggestions: [],
     versions: [],
-    isLoadingVersions: false
+    isLoadingVersions: false,
+    stableVersionsOnly: true
   };
 
   componentDidCatch(err, info) {
@@ -95,8 +97,26 @@ class App extends React.Component {
     console.log(`App.onSearchSubmit.value`, value);
   };
 
+  onStableVersionsOnlyClick = e => {
+    this.setState({ stableVersionsOnly: e.target.checked });
+  };
+
+  filteredVersions = () => {
+    const { stableVersionsOnly, versions } = this.state;
+    if (stableVersionsOnly) {
+      return versions.filter(stable.is);
+    }
+
+    return versions;
+  };
+
   render() {
-    const { suggestions, versions, isLoadingVersions } = this.state;
+    const {
+      suggestions,
+      versions,
+      isLoadingVersions,
+      stableVersionsOnly
+    } = this.state;
 
     return (
       <div>
@@ -116,8 +136,15 @@ class App extends React.Component {
           </AutoComplete>
           <aside>
             <h2>Versions</h2>
+            <label>
+              <input
+                onClick={this.onStableVersionsOnlyClick}
+                checked={stableVersionsOnly}
+                type="checkbox"
+              />Stable Versions Only
+            </label>
             <List
-              dataSource={versions}
+              dataSource={this.filteredVersions()}
               renderItem={version => (
                 <List.Item key={version}>
                   <List.Item.Meta

@@ -79,10 +79,6 @@ class App extends React.Component {
 
   onSelect = (query, option) => {
     const packageName = encodedPackageName(query);
-    console.log(
-      `onSelect query=${query}, packageName=${packageName}, option`,
-      option
-    );
 
     getVersions(packageName).then(versions => {
       this.setState(prevState => ({
@@ -144,6 +140,7 @@ class App extends React.Component {
               />Stable Versions Only
             </label>
             <List
+              style={{ width: "75vw" }}
               dataSource={this.filteredVersions()}
               renderItem={version => (
                 <List.Item key={version}>

@@ -1,4 +1,5 @@
 import axios from "axios";
+import semverSort from "semver-sort";
 
 // Credit to BundlePhobia by Shubham Kanodia
 // https://github.com/pastelsky/bundlephobia/blob/59d865c01c9232b689b0ea3a3f4e4d655adff063/client/api.js#L53
@@ -14,7 +15,7 @@ const suggestionSort = (packageA, packageB) => {
   }
 };
 
-const getData = _ => _.data;
+const filterByData = _ => _.data;
 const sortData = _ => _.sort(suggestionSort);
 const extractProperties = _ =>
   _.map(({ package: { name, version, description } }) => ({
@@ -25,9 +26,16 @@ const extractProperties = _ =>
 
 const getSuggestions = query =>
   axios
-    .get(`https://api.npms.io/v2/search/suggestions?q=${query}`, false)
-    .then(getData)
+    .get(`https://api.npms.io/v2/search/suggestions?q=${query}`)
+    .then(filterByData)
     .then(sortData)
     .then(extractProperties);
 
-export { getSuggestions };
+// const sortVersions = _ => _.sort((v1, v2) => v2 - v1);
+const getVersions = packageName =>
+  axios
+    .get(`https://bunpkg.herokuapp.com/api/versions/${packageName}`)
+    .then(filterByData)
+    .then(semverSort.desc);
+
+export { getSuggestions, getVersions };

@@ -2,9 +2,19 @@ import React from "react";
 import ReactDOM from "react-dom";
 import debounce from "tiny-debounce";
 
-import { AutoComplete, Icon, Input } from "antd";
+import {
+  AutoComplete,
+  Icon,
+  Input,
+  Steps,
+  Button,
+  List,
+  message,
+  Avatar,
+  Spin
+} from "antd";
 
-import { getSuggestions } from "./data/SearchRepository";
+import { getSuggestions, getVersions } from "./data/SearchRepository";
 import Suggestions from "./components/Suggestions";
 import AutocompleteInput from "./components/AutoCompleteInput";
 
@@ -29,7 +39,7 @@ function renderOption(suggestion) {
 }
 
 class App extends React.Component {
-  state = { suggestions: [] };
+  state = { suggestions: [], versions: [] };
 
   componentDidCatch(err, info) {
     console.log(`err, info`, err, info);
@@ -47,9 +57,14 @@ class App extends React.Component {
   }, 300);
 
   onSearch = query => {
-    // console.log(`onSearch`, query);
-    // const { value: query } = searchInput.current;
     this.fetchSuggestions(query);
+  };
+
+  onSelect = packageName => {
+    getVersions(packageName).then(versions => {
+      console.log(`onSelect.versions`, versions);
+      this.setState({ versions });
+    });
   };
 
   onSearchSubmit = value => {
@@ -57,25 +72,49 @@ class App extends React.Component {
   };
 
   render() {
-    const { suggestions } = this.state;
+    const { suggestions, versions } = this.state;
 
     return (
       <div>
-        {/*<label>
-          <input onChange={this.onSearch} ref={searchInput} type="text" />
-          🔍
-        </label>
-        {suggestions.length > 0 && <Suggestions suggestions={suggestions} />}*/}
-        {/*<AutocompleteInput onSearchSubmit={this.onSearchSubmit} />*/}
-        <AutoComplete
-          dataSource={suggestions.map(renderOption)}
-          style={{ width: "75vw" }}
-          onSelect={onSelect}
-          onSearch={this.onSearch}
-          placeholder="input here"
-        >
-          <Input suffix={<Icon type="search" />} />
-        </AutoComplete>
+        <header>
+          <h2>Get Package versions</h2>
+        </header>
+        <section>
+          <AutoComplete
+            dataSource={suggestions.map(renderOption)}
+            style={{ width: "75vw" }}
+            onSelect={this.onSelect}
+            onSearch={this.onSearch}
+            placeholder="input here"
+          >
+            <Input suffix={<Icon type="search" />} />
+          </AutoComplete>
+          <aside>
+            <h2>Versions</h2>
+            <List
+              dataSource={versions}
+              renderItem={version => (
+                <List.Item key={version}>
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
+                    }
+                    title={<a href="https://ant.design">{version}</a>}
+                    description={version}
+                  />
+                  <div>{version}</div>
+                </List.Item>
+              )}
+            >
+              {/*this.state.loading &&
+                this.state.hasMore && (
+                  <div className="demo-loading-container">
+                    <Spin />
+                  </div>
+                )*/}
+            </List>
+          </aside>
+        </section>
       </div>
     );
   }

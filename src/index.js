@@ -21,17 +21,18 @@ import AutocompleteInput from "./components/AutoCompleteInput";
 import "antd/dist/antd.css";
 import "./styles.css";
 
-const searchInput = React.createRef();
 const Option = AutoComplete.Option;
 
-function onSelect(value) {
-  console.log("onSelect", value);
-}
+// Credit Michael Jackson
+// https://github.com/unpkg/unpkg.com/blob/82d404a973cfe24a2a632859cbb6ab8958d48e9e/modules/utils/fetchNpmPackageInfo.js#L15
+const encodedPackageName = packageName =>
+  packageName.charAt(0) === "@"
+    ? `@${encodeURIComponent(packageName.substring(1))}`
+    : encodeURIComponent(packageName);
 
 function renderOption(suggestion) {
-  // console.log(`renderOption.suggestion`, suggestion);
   return (
-    <Option key={suggestion.name}>
+    <Option key={suggestion.name} value={suggestion.name}>
       <span>{suggestion.name}</span>
       <div>{suggestion.description}</div>
     </Option>
@@ -39,31 +40,54 @@ function renderOption(suggestion) {
 }
 
 class App extends React.Component {
-  state = { suggestions: [], versions: [] };
+  state = {
+    suggestions: [],
+    versions: [],
+    isLoadingVersions: false
+  };
 
   componentDidCatch(err, info) {
     console.log(`err, info`, err, info);
   }
 
   fetchSuggestions = debounce(query => {
-    console.log(`debounced with query=${query}`);
+    const packageName = encodedPackageName(query);
 
-    if (query === "") {
-      this.setState({ suggestions: [] });
-      return;
+    if (packageName === "") {
+      this.setState(prevState => ({
+        ...prevState,
+        suggestions: [],
+        versions: [],
+        isLoadingVersions: false
+      }));
     }
 
-    getSuggestions(query).then(suggestions => this.setState({ suggestions }));
+    getSuggestions(packageName).then(suggestions =>
+      this.setState(prevState => ({
+        ...prevState,
+        suggestions,
+        isLoadingVersions: true
+      }))
+    );
   }, 300);
 
   onSearch = query => {
     this.fetchSuggestions(query);
   };
 
-  onSelect = packageName => {
+  onSelect = (query, option) => {
+    const packageName = encodedPackageName(query);
+    console.log(
+      `onSelect query=${query}, packageName=${packageName}, option`,
+      option
+    );
+
     getVersions(packageName).then(versions => {
-      console.log(`onSelect.versions`, versions);
-      this.setState({ versions });
+      this.setState(prevState => ({
+        ...prevState,
+        versions,
+        isLoadingVersions: false
+      }));
     });
   };
 
@@ -72,7 +96,7 @@ class App extends React.Component {
   };
 
   render() {
-    const { suggestions, versions } = this.state;
+    const { suggestions, versions, isLoadingVersions } = this.state;
 
     return (
       <div>
@@ -85,7 +109,8 @@ class App extends React.Component {
             style={{ width: "75vw" }}
             onSelect={this.onSelect}
             onSearch={this.onSearch}
-            placeholder="input here"
+            placeholder="Search Package"
+            optionLabelProp="value"
           >
             <Input suffix={<Icon type="search" />} />
           </AutoComplete>
@@ -106,12 +131,11 @@ class App extends React.Component {
                 </List.Item>
               )}
             >
-              {/*this.state.loading &&
-                this.state.hasMore && (
-                  <div className="demo-loading-container">
-                    <Spin />
-                  </div>
-                )*/}
+              {isLoadingVersions && (
+                <div className="demo-loading-container">
+                  <Spin />
+                </div>
+              )}
             </List>
           </aside>
         </section>

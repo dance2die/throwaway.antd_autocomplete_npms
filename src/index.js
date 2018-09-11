@@ -15,7 +15,11 @@ import {
   Spin
 } from "antd";
 
-import { getSuggestions, getVersions } from "./data/SearchRepository";
+import {
+  getSuggestions,
+  getVersions,
+  getPackageInfo
+} from "./data/SearchRepository";
 import Suggestions from "./components/Suggestions";
 import AutocompleteInput from "./components/AutoCompleteInput";
 
@@ -40,12 +44,35 @@ function renderOption(suggestion) {
   );
 }
 
+async function printInfo(packageName, version) {
+  const result = await getPackageInfo(packageName, version);
+  console.log(`printInfo`, result);
+}
+
+function renderListItem(packageName, version) {
+  return (
+    <List.Item key={version}>
+      <List.Item.Meta
+        avatar={
+          <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
+        }
+        title={
+          <h3 onClick={() => printInfo(packageName, version)}>{version}</h3>
+        }
+        description={version}
+      />
+      <div>{version}</div>
+    </List.Item>
+  );
+}
+
 class App extends React.Component {
   state = {
     suggestions: [],
     versions: [],
     isLoadingVersions: false,
-    stableVersionsOnly: true
+    stableVersionsOnly: true,
+    packageName: ""
   };
 
   componentDidCatch(err, info) {
@@ -65,11 +92,10 @@ class App extends React.Component {
     }
 
     getSuggestions(packageName).then(suggestions =>
-      this.setState(prevState => ({
-        ...prevState,
+      this.setState({
         suggestions,
         isLoadingVersions: true
-      }))
+      })
     );
   }, 300);
 
@@ -77,15 +103,15 @@ class App extends React.Component {
     this.fetchSuggestions(query);
   };
 
-  onSelect = (query, option) => {
+  onSelect = query => {
     const packageName = encodedPackageName(query);
 
     getVersions(packageName).then(versions => {
-      this.setState(prevState => ({
-        ...prevState,
+      this.setState({
+        packageName,
         versions,
         isLoadingVersions: false
-      }));
+      });
     });
   };
 
@@ -111,7 +137,8 @@ class App extends React.Component {
       suggestions,
       versions,
       isLoadingVersions,
-      stableVersionsOnly
+      stableVersionsOnly,
+      packageName
     } = this.state;
 
     return (
@@ -142,18 +169,7 @@ class App extends React.Component {
             <List
               style={{ width: "75vw" }}
               dataSource={this.filteredVersions()}
-              renderItem={version => (
-                <List.Item key={version}>
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
-                    }
-                    title={<a href="https://ant.design">{version}</a>}
-                    description={version}
-                  />
-                  <div>{version}</div>
-                </List.Item>
-              )}
+              renderItem={version => renderListItem(packageName, version)}
             >
               {isLoadingVersions && (
                 <div className="demo-loading-container">

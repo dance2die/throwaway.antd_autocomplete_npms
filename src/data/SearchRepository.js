@@ -38,4 +38,9 @@ const getVersions = packageName =>
     .then(filterByData)
     .then(semverSort.desc);
 
-export { getSuggestions, getVersions };
+const getPackageInfo = (packageName, version) =>
+  axios
+    .get(`https://bunpkg.herokuapp.com/api/info/${packageName}/${version}`)
+    .then(filterByData);
+
+export { getSuggestions, getVersions, getPackageInfo };

@@ -57,7 +57,9 @@ function renderListItem(packageName, version) {
           <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
         }
         title={
-          <h3 onClick={() => printInfo(packageName, version)}>{version}</h3>
+          <strong onClick={() => printInfo(packageName, version)}>
+            {version}
+          </strong>
         }
         description={version}
       />
@@ -67,6 +69,14 @@ function renderListItem(packageName, version) {
 }
 
 class App extends React.Component {
+  static defaultState = {
+    suggestions: [],
+    versions: [],
+    isLoadingVersions: false,
+    stableVersionsOnly: true,
+    packageName: ""
+  };
+
   state = {
     suggestions: [],
     versions: [],
@@ -83,12 +93,8 @@ class App extends React.Component {
     const packageName = encodedPackageName(query);
 
     if (packageName === "") {
-      this.setState(prevState => ({
-        ...prevState,
-        suggestions: [],
-        versions: [],
-        isLoadingVersions: false
-      }));
+      this.setState(App.defaultState);
+      return;
     }
 
     getSuggestions(packageName).then(suggestions =>
@@ -119,7 +125,7 @@ class App extends React.Component {
     console.log(`App.onSearchSubmit.value`, value);
   };
 
-  onStableVersionsOnlyClick = e => {
+  onStableVersionsOnlyChange = e => {
     this.setState({ stableVersionsOnly: e.target.checked });
   };
 
@@ -161,7 +167,7 @@ class App extends React.Component {
             <h2>Versions</h2>
             <label>
               <input
-                onClick={this.onStableVersionsOnlyClick}
+                onChange={this.onStableVersionsOnlyChange}
                 checked={stableVersionsOnly}
                 type="checkbox"
               />Stable Versions Only
